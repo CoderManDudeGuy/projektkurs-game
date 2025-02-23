@@ -1,13 +1,11 @@
 import java.awt.*;
-import java.awt.geom.Ellipse2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 
 public class Mover {
     private Image image;
     private int xPos;
     private int yPos;
-    private int gravity = 1;
+    private int ySpeed = 0;
     private final int width;
     private final int height;
     private int speed = 3;
@@ -19,7 +17,7 @@ public class Mover {
     Point check2 = new Point();
     Point check3 = new Point();
     private int lifePoints = 100;
-    Rectangle2D player = new Rectangle2D.Double(300, 300, 64, 64);
+
 
     public Mover(int pXPos, int pYPos, int pWidth, int pHeight, SpriteSheet pSpriteSheet, Control pControl) {
         sprites = pSpriteSheet;
@@ -40,28 +38,31 @@ public class Mover {
         int oldX = xPos;
         int oldY = yPos;
         xPos += pMove.getX() * speed;
-        yPos += pMove.getY() * speed;
+        yPos += ySpeed * speed;
+        System.out.println(ySpeed);
+
         if (moveSeqSleep++ == 7) {
             if (moveSeq < 2) {
                 moveSeq++;
             } else {
                 moveSeq = 0;
-                speed += gravity;
+                ySpeed += 1;
             }
             moveSeqSleep = 0;
         }
-        System.out.println(speed);
-        setCurrentImage((int) pMove.getX(), (int) pMove.getY(), moveSeq);
-        setCheckPoints(pMove);
+        setCurrentImage((int) pMove.getX(), (int) ySpeed, moveSeq);
+        setCheckPoints(new Point((int) pMove.getX(), 1));
 
         if (collisionCheck()) {
             xPos = oldX;
             yPos = oldY;
+            ySpeed += pMove.getY();
             lifePoints--;
             if (lifePoints < 0) {
                 lifePoints = 100;
             }
         }
+
         itemCheck(control.keyManager.action);
     }
 
@@ -72,12 +73,12 @@ public class Mover {
         if (pXMove == 1) {
             image = sprites.getSpriteElement(2, pMoveSeq);
         }
-//        if (pYMove == -1) {
-//            image = sprites.getSpriteElement(3, pMoveSeq);
-//        }
-//        if (pYMove == 1) {
-//            image = sprites.getSpriteElement(0, pMoveSeq);
-//        }
+        if (pYMove == -1) {
+            image = sprites.getSpriteElement(3, pMoveSeq);
+        }
+        if (pYMove == 1) {
+            image = sprites.getSpriteElement(0, pMoveSeq);
+        }
     }
 
     public void setCheckPoints(Point pMove) {
@@ -103,7 +104,6 @@ public class Mover {
             check1.setLocation(xPos + 10, yPos + (height - 5));
             check2.setLocation(xPos + (width / 2), yPos + (height - 5));
             check3.setLocation(xPos + (width - 10), yPos + (height - 5));
-            //Check 4 jump
         }
     }
 
@@ -114,6 +114,7 @@ public class Mover {
             Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
             Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
             if (temp1.isBlocked() || temp2.isBlocked() || temp3.isBlocked()) {
+                ySpeed = 0;
                 return true;
             }
         }
