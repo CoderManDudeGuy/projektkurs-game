@@ -8,7 +8,6 @@ public class Mover {
     private int ySpeed = 0;
     private final int width;
     private final int height;
-    private int speed = 3;
     private int moveSeq = 0;
     private int moveSeqSleep = 0;
     private SpriteSheet sprites;
@@ -17,6 +16,7 @@ public class Mover {
     Point check2 = new Point();
     Point check3 = new Point();
     private int lifePoints = 100;
+    boolean grounded;
 
 
     public Mover(int pXPos, int pYPos, int pWidth, int pHeight, SpriteSheet pSpriteSheet, Control pControl) {
@@ -37,8 +37,11 @@ public class Mover {
         Control.camera.centerOnMover(this);
         int oldX = xPos;
         int oldY = yPos;
-        xPos += pMove.getX() * speed;
-        yPos += ySpeed * speed;
+        xPos += pMove.getX();
+        if (ySpeed!=0){
+            grounded = false;
+        }
+        yPos += ySpeed;
         System.out.println(ySpeed);
 
         if (moveSeqSleep++ == 7) {
@@ -46,7 +49,10 @@ public class Mover {
                 moveSeq++;
             } else {
                 moveSeq = 0;
-                ySpeed += 1;
+                if (!grounded) {
+                    ySpeed += 2;
+                }
+
             }
             moveSeqSleep = 0;
         }
@@ -56,11 +62,15 @@ public class Mover {
         if (collisionCheck()) {
             xPos = oldX;
             yPos = oldY;
-            ySpeed += pMove.getY();
             lifePoints--;
             if (lifePoints < 0) {
                 lifePoints = 100;
             }
+        } else {
+            grounded = false;
+        }
+        if(grounded){
+            ySpeed += pMove.getY();
         }
 
         itemCheck(control.keyManager.action);
@@ -115,6 +125,7 @@ public class Mover {
             Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
             if (temp1.isBlocked() || temp2.isBlocked() || temp3.isBlocked()) {
                 ySpeed = 0;
+                grounded = true;
                 return true;
             }
         }

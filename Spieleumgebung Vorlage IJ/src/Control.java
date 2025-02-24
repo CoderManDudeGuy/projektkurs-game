@@ -11,7 +11,6 @@ public class Control {
     public static Mover mover;
     public static KeyManager keyManager;
     public static Camera camera;
-    public int g=1;
 
 
     public Control() {
@@ -26,8 +25,8 @@ public class Control {
     }
 
     private void createGame() {
-        map = new Map("res/fall.txt");
-        SpriteSheet sheet = new SpriteSheet("res/playertest.png", 4, 3, 64, 64);
+        map = new Map("res/BetterTest.txt");
+        SpriteSheet sheet = new SpriteSheet("res/playerSheet.png", 4, 3, 64, 64);
         mover  = new Mover(117, 115, 64, 64, sheet, this);
         camera = new Camera(map.getMapWidth(), map.getMapHeight(), gui.gamePanel.getWidth(), gui.gamePanel.getHeight());
         gui.mainFrame.requestFocus();
@@ -53,10 +52,10 @@ public class Control {
     private Point keyInputToMove() {
         int xMove = 0;
         int yMove = 0;
-        if (keyManager.up) yMove = -2;
+        if (keyManager.up) yMove = -7;
 //        if (keyManager.down) yMove = 1;
-        if (keyManager.left) xMove = -1;
-        if (keyManager.right) xMove = 1;
+        if (keyManager.left) xMove = -4;
+        if (keyManager.right) xMove = 4;
         return new Point(xMove, yMove);
     }
 
