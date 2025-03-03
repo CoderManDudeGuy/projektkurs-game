@@ -95,7 +95,6 @@ public class GUI implements ActionListener {
             }
             if (Control.mover != null) {
                 Control.mover.paintMe(g2d);
-                Control.mover.paintMe(g);
             }
         }
     }

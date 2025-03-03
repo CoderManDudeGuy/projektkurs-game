@@ -95,13 +95,6 @@ public class Mover {
         playerHitBox = new Ellipse2D.Double(pXMove+20, pYMove+16,  24, 48);
     }
 
-    public void paintMe(Graphics g){
-        g.fillOval(xPos+20, yPos+16,  24, 48);
-        playerHitBox = new Ellipse2D.Double(xPos+20, yPos+16,  24, 48);
-        Graphics2D g2d = (Graphics2D) g;
-        g2d.fill(playerHitBox);
-    }
-
     public void setCheckPoints(Point pMove) {
         if (pMove.getX() == 1 && pMove.getY() == 0) { //rechts
             check1.setLocation(xPos + (width - 10), yPos + 5);
@@ -207,5 +200,7 @@ public class Mover {
         public void paintMe(Graphics2D g2d) {
         g2d.drawImage(image, xPos - Control.camera.getXOffset(), yPos - Control.camera.getYOffset(), width, height, null);
 //        renderLifePointBar(g2d);
+            playerHitBox = new Ellipse2D.Double(xPos - Control.camera.getXOffset()+20, yPos - Control.camera.getYOffset()+16,  24, 48);
+            g2d.fill(playerHitBox);
     }
 }
