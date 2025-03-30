@@ -1,9 +1,12 @@
 import java.awt.*;
+import java.awt.geom.Point2D;
+import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.awt.geom.Ellipse2D;
+import java.util.Vector;
 
 public class Mover {
-    Ellipse2D playerHitBox;
+    Rectangle playerHitBox;
     private Image image;
     private int xPos;
     private int yPos;
@@ -14,9 +17,7 @@ public class Mover {
     private int moveSeqSleep = 0;
     private SpriteSheet sprites;
     private Control control;
-    Point check1 = new Point();
-    Point check2 = new Point();
-    Point check3 = new Point();
+    private ArrayList<Tile> neighbours;
     private int lifePoints = 100;
     boolean grounded;
 
@@ -29,7 +30,7 @@ public class Mover {
         width = pWidth;
         height = pHeight;
         control = pControl;
-        playerHitBox = new Ellipse2D.Double(xPos+20, yPos+16, 24, 48);
+        playerHitBox = new Rectangle(xPos+23, yPos+20, 18, 44);
     }
 
     public Point getLocation() {
@@ -45,7 +46,6 @@ public class Mover {
             grounded = false;
         }
         yPos += ySpeed;
-        System.out.println(ySpeed);
 
         if (moveSeqSleep++ == 7) {
             if (moveSeq < 2) {
@@ -53,14 +53,13 @@ public class Mover {
             } else {
                 moveSeq = 0;
                 if (!grounded) {
-                    ySpeed += 2;
+                    ySpeed += 1;
                 }
 
             }
             moveSeqSleep = 0;
         }
         setCurrentImage((int) pMove.getX(), (int) ySpeed, moveSeq);
-        setCheckPoints(new Point((int) pMove.getX(), 1));
 
         if (collisionCheck()) {
             xPos = oldX;
@@ -72,11 +71,7 @@ public class Mover {
         } else {
             grounded = false;
         }
-        if(grounded){
-            ySpeed += pMove.getY();
-        }
-
-        itemCheck(control.keyManager.action);
+//        itemCheck(control.keyManager.action);
     }
 
     public void setCurrentImage(int pXMove, int pYMove, int pMoveSeq) {
@@ -84,6 +79,7 @@ public class Mover {
             image = sprites.getSpriteElement(1, pMoveSeq);
         }
         if (pXMove == 1) {
+
             image = sprites.getSpriteElement(2, pMoveSeq);
         }
         if (pYMove == -1) {
@@ -92,88 +88,67 @@ public class Mover {
         if (pYMove == 1) {
             image = sprites.getSpriteElement(0, pMoveSeq);
         }
-        playerHitBox = new Ellipse2D.Double(pXMove+20, pYMove+16,  24, 48);
-    }
-
-    public void setCheckPoints(Point pMove) {
-        if (pMove.getX() == 1 && pMove.getY() == 0) { //rechts
-            check1.setLocation(xPos + (width - 10), yPos + 5);
-            check2.setLocation(xPos + (width - 10), yPos + (height / 2));
-            check3.setLocation(xPos + (width - 10), yPos + height - 5);
-        }
-
-        if (pMove.getX() == -1 && pMove.getY() == 0) { //links
-            check1.setLocation(xPos + 10, yPos + 5);
-            check2.setLocation(xPos + 10, yPos + (height / 2));
-            check3.setLocation(xPos + 10, yPos + height - 5);
-        }
-
-        if (pMove.getX() == 0 && pMove.getY() == -1) { //oben
-            check1.setLocation(xPos + 10, yPos + 5);
-            check2.setLocation(xPos + (width / 2), yPos + 5);
-            check3.setLocation(xPos + (width / 2) + 10, yPos + 5);
-        }
-
-        if (pMove.getX() == 0 && pMove.getY() == 1) { //unten
-            check1.setLocation(xPos + 10, yPos + (height - 5));
-            check2.setLocation(xPos + (width / 2), yPos + (height - 5));
-            check3.setLocation(xPos + (width - 10), yPos + (height - 5));
-        }
+        playerHitBox = new Rectangle(xPos+20, yPos+16,  24, 48);
     }
 
     private boolean collisionCheck() {
         ArrayList<Layer> layerList = Control.map.getLayerList();
-        for (int i = 0; i < layerList.size(); i++) {
-            Tile temp1 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
-            Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
-            Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
-            if (temp1.isBlocked() || temp2.isBlocked() || temp3.isBlocked()) {
-                ySpeed = 0;
-                grounded = true;
-                return true;
+        neighbours = Control.map.getNeighbours(xPos +32, yPos +32, 18, 44);
+        for (int i = 0; i < neighbours.size(); i++) {
+            if (playerHitBox.getBounds().intersects(neighbours.get(i).xPos() + Control.camera.getXOffset(), neighbours.get(i).yPos() + Control.camera.getYOffset(), 64, 64)) {
+                if (neighbours.get(i).isBlocked()) {
+                    if (i==5||i==6||i==7){
+                        grounded = true;
+                        ySpeed = 0;
+                    }
+                    if (i==0||i==1||i==2){
+                        ySpeed = 0;
+                    }
+                    return true;
+                }
             }
         }
         return false;
     }
 
-    public void itemCheck(boolean action) {
-        ArrayList<Layer> layerList = control.map.getLayerList();
-        for (int i = 0; i < layerList.size(); i++) {
-            if (action) {
-                Tile temp1 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
-                Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
-                Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
-
-                if (temp1.getFlagI().equals("I")) {
-                    temp1.itemCatched();
-                    Control.keyManager.releaseAll();
-                    return;
-                }
-                if (temp2.getFlagI().equals("I")) {
-                    temp2.itemCatched();
-                    Control.keyManager.releaseAll();
-                    return;
-                }
-
-                if (temp3.getFlagI().equals("I")) {
-                    temp3.itemCatched();
-                    Control.keyManager.releaseAll();
-                    return;
-                }
-
-                if (temp1.getFlagI().equals("K")) {
-                    control.loadNewMap();
-                    Control.keyManager.releaseAll();
-                    return;
-                }
-                if (temp2.getFlagI().equals("K")) {
+//    public void itemCheck(boolean action) {
+//        ArrayList<Layer> layerList = control.map.getLayerList();
+//        for (int i = 0; i < layerList.size(); i++) {
+//            if (action) {
+//                Tile temp1 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
+//                Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
+//                Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
+//
+//                if (temp1.getFlagI().equals("I")) {
+//                    temp1.itemCatched();
+//                    Control.keyManager.releaseAll();
+//                    return;
+//                }
+//                if (temp2.getFlagI().equals("I")) {
+//                    temp2.itemCatched();
+//                    Control.keyManager.releaseAll();
+//                    return;
+//                }
+//
+//                if (temp3.getFlagI().equals("I")) {
+//                    temp3.itemCatched();
+//                    Control.keyManager.releaseAll();
+//                    return;
+//                }
+//
+//                if (temp1.getFlagI().equals("K")) {
 //                    control.loadNewMap();
-                    Control.keyManager.releaseAll();
-                    return;
-                }
-            }
-        }
-    }
+//                    Control.keyManager.releaseAll();
+//                    return;
+//                }
+//                if (temp2.getFlagI().equals("K")) {
+////                    control.loadNewMap();
+//                    Control.keyManager.releaseAll();
+//                    return;
+//                }
+//            }
+//        }
+//    }
 
     public void renderLifePointBar(Graphics2D g2d){
         BasicStroke stroke = new BasicStroke(3 , BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND );
@@ -194,13 +169,11 @@ public class Mover {
 
         g2d.fillRect(xPos - Control.camera.getXOffset()-13, yPos - Control.camera.getYOffset()-23, lifePoints, 16);
     }
-
-
-
+    
         public void paintMe(Graphics2D g2d) {
         g2d.drawImage(image, xPos - Control.camera.getXOffset(), yPos - Control.camera.getYOffset(), width, height, null);
 //        renderLifePointBar(g2d);
-            playerHitBox = new Ellipse2D.Double(xPos - Control.camera.getXOffset()+20, yPos - Control.camera.getYOffset()+16,  24, 48);
+            playerHitBox = new Rectangle(xPos - Control.camera.getXOffset()+23, yPos - Control.camera.getYOffset()+20,  18, 44);
             g2d.fill(playerHitBox);
     }
 }

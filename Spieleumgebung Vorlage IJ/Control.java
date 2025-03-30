@@ -52,10 +52,10 @@ public class Control {
     private Point keyInputToMove() {
         int xMove = 0;
         int yMove = 0;
-        if (keyManager.up) yMove = -7;
+        if (keyManager.jump) yMove = -5;
 //        if (keyManager.down) yMove = 1;
-        if (keyManager.left) xMove = -4;
-        if (keyManager.right) xMove = 4;
+        if (keyManager.left) xMove = -2;
+        if (keyManager.right) xMove = 2;
         return new Point(xMove, yMove);
     }
 
