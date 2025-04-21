@@ -87,7 +87,12 @@ public class Mover {
 
         itemCheck(control.keyManager.action);
 
-        System.out.println(xPos + ", " + yPos);
+//        System.out.println(xPos + ", " + yPos);
+    }
+
+    public void setPos(int pXPos, int pYPos){
+        xPos = pXPos;
+        yPos = pYPos;
     }
 
     public void shoot(){
@@ -175,6 +180,16 @@ public class Mover {
                 ySpeed = 0;
                 grounded = true;
                 return true;
+            }
+
+            if (temp1.getFlagI().equals("A") || temp2.getFlagI().equals("A") || temp3.getFlagI().equals("A") || temp4.getFlagI().equals("A") || temp5.getFlagI().equals("A") || temp6.getFlagI().equals("A")) {
+                control.loadNewMap();
+                System.out.println(temp1.getFlagI());
+                System.out.println(temp2.getFlagI());
+                System.out.println(temp3.getFlagI());
+                System.out.println(temp4.getFlagI());
+                System.out.println(temp5.getFlagI());
+                System.out.println(temp6.getFlagI());
             }
         }
         return false;

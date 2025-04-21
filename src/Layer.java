@@ -1,5 +1,4 @@
 import java.awt.*;
-import java.util.ArrayList;
 
 public class Layer {
 
@@ -7,7 +6,6 @@ public class Layer {
     private int tileHeight; //Das ist die Höhe eines Tiles in der Map; kann differieren von der Tilehöhe im TileSet
     private int numberOfTilesX;
     private int numberOfTilesY;
-    private ArrayList<Tile> neighbours = new ArrayList<>();
     TileSet tileSet;
     public Tile[][] tiles;
 
@@ -73,78 +71,6 @@ public class Layer {
 
     public int getTileHeight() {
         return tileHeight;
-    }
-
-    public ArrayList<Tile> getNeighbours(int xPos, int yPos, int height, int width){
-        neighbours.clear();
-
-        if(xPos/tileWidth - 1 >= 0 && yPos/tileHeight - 1 >= 0){
-            //left
-            //up
-            tiles[(xPos/tileWidth)-1][(yPos/tileHeight)-1].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)-1][(yPos/tileHeight)-1]);
-        }
-
-        if(yPos/tileHeight - 1 >= 0){
-            //up
-            tiles[(xPos/tileWidth)][(yPos/tileHeight)-1].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)][(yPos/tileHeight)-1]);
-        }
-
-        if(yPos/tileHeight - 1 >= 0 && xPos/tileWidth + 1 < numberOfTilesX){
-            //up
-            //right
-            tiles[(xPos/tileWidth)+1][(yPos/tileHeight)-1].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)+1][(yPos/tileHeight)-1]);
-        }
-
-        if(xPos/tileWidth - 1 >= 0){
-            //left
-            tiles[(xPos/tileWidth-1)][(yPos/tileHeight)].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)-1][(yPos/tileHeight)]);
-        }
-
-        if(xPos/tileWidth + 1 < numberOfTilesX){
-            //right
-            tiles[(xPos/tileWidth)+1][(yPos/tileHeight)].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)+1][(yPos/tileHeight)]);
-        }
-
-        if(yPos/tileHeight + 1 < numberOfTilesY && xPos/tileWidth - 1 >= 0){
-            //down
-            //left
-            tiles[(xPos/tileWidth)-1][(yPos/tileHeight)+1].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)-1][(yPos/tileHeight)+1]);
-        }
-
-        if(yPos/tileHeight + 1 < numberOfTilesY){
-            //down
-            tiles[(xPos/tileWidth)][(yPos/tileHeight)+1].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)][(yPos/tileHeight)+1]);
-        }
-
-        if(xPos/tileWidth + 1 <= numberOfTilesX && yPos/tileHeight + 1 < numberOfTilesY){
-            //right
-            //down
-            tiles[(xPos/tileWidth)+1][(yPos/tileHeight)+1].isNeighbour = true;
-            neighbours.add(tiles[(xPos/tileWidth)+1][(yPos/tileHeight)+1]);
-        }
-
-//        if((yPos/tileWidth)-1 >= 0) {
-//
-//        }
-//        if((xPos/tileWidth)-1 >= 0&&(yPos/tileWidth)-1 >= 0) {
-//
-//        }
-//        if((xPos/tileWidth)-1 >= 0) {
-//
-//        }
-//        if((xPos/tileWidth)-1 >= 0&&(yPos/tileWidth)+1 <) {
-//
-//        }
-
-
-        return neighbours;
     }
 
     public void renderLayer(Graphics2D g2d) {
