@@ -9,6 +9,7 @@ public class Control {
     public static final long maxLoopTime = 1000 / FPS;
     public static String resFolder = "res/";
     public static Mover mover;
+    public static Enemy enemy;
     public static KeyManager keyManager;
     public static Camera camera;
 
@@ -26,8 +27,9 @@ public class Control {
 
     private void createGame() {
         map = new Map("res/BetterTest.txt");
-        SpriteSheet sheet = new SpriteSheet("res/playerSheet.png", 4, 3, 64, 64);
+        SpriteSheet sheet = new SpriteSheet("res/playertest.png", 4, 3, 64, 64);
         mover  = new Mover(117, 115, 64, 64, sheet, this);
+        enemy  = new Enemy(405, 323, 64, 64, sheet, this);
         camera = new Camera(map.getMapWidth(), map.getMapHeight(), gui.gamePanel.getWidth(), gui.gamePanel.getHeight());
         gui.mainFrame.requestFocus();
     }
@@ -39,7 +41,7 @@ public class Control {
     }
 
     public void loadNewMap() {
-//        map = new Map("res/Aktuelle Demo-Map_2.txt");
+        map = new Map("res/fall.txt");
     }
 
     public void update() {
@@ -56,6 +58,8 @@ public class Control {
 //        if (keyManager.down) yMove = 1;
         if (keyManager.left) xMove = -4;
         if (keyManager.right) xMove = 4;
+        if (keyManager.down) mover.shoot();
+        if (keyManager.action) loadNewMap();
         return new Point(xMove, yMove);
     }
 
