@@ -1,16 +1,10 @@
 import java.awt.*;
-import java.awt.geom.Point2D;
-import java.awt.geom.Rectangle2D;
 import java.util.ArrayList;
 import java.awt.geom.Ellipse2D;
-import java.util.Vector;
 
 public class Mover {
-    Rectangle playerHitBox;
-    Point2D leftBottom;
-    Point2D leftTop;
-    Point2D rightBottom;
-    Point2D rightTop;
+    Ellipse2D playerHitBox;
+    Ellipse2D ball = new Ellipse2D.Double();
     private Image image;
     private int xPos;
     private int yPos;
@@ -21,13 +15,20 @@ public class Mover {
     private int moveSeqSleep = 0;
     private SpriteSheet sprites;
     private Control control;
-    private ArrayList<Tile> neighbours;
+    Point check1 = new Point();
+    Point check2 = new Point();
+    Point check3 = new Point();
+    Point check4 = new Point();
+    Point check5 = new Point();
+    Point check6 = new Point();
     private int lifePoints = 100;
     boolean grounded;
-    private int jumpCounter = 0;
-    private int jumpTop;
-    private boolean isJumping = false;
-    int direction;
+    boolean balling;
+    int ballOffset = 20;
+    private boolean hit = false;
+    private Bullet b;
+    private int cooldown;
+    private String facing = "right";
 
 
     public Mover(int pXPos, int pYPos, int pWidth, int pHeight, SpriteSheet pSpriteSheet, Control pControl) {
@@ -38,13 +39,8 @@ public class Mover {
         width = pWidth;
         height = pHeight;
         control = pControl;
-        leftBottom = new Point2D.Double(xPos+24, yPos+63);
-        leftTop = new Point2D.Double(xPos+24, yPos+21);
-        rightBottom = new Point2D.Double(xPos+40, yPos+63);
-        rightTop = new Point2D.Double(xPos+40, yPos+21);
-        playerHitBox = new Rectangle(xPos+23, yPos+20, 18, 44);
+        playerHitBox = new Ellipse2D.Double(xPos+20, yPos+16, 24, 48);
     }
-
 
     public Point getLocation() {
         return new Point(xPos, yPos);
@@ -53,203 +49,211 @@ public class Mover {
     public void setMove(Point pMove) {
         Control.camera.centerOnMover(this);
         int oldX = xPos;
-        int walkMultiplier=4;
-        if (!grounded){
-            walkMultiplier = 5;
+        int oldY = yPos;
+        xPos += pMove.getX();
+        if (ySpeed!=0){
+            grounded = false;
         }
-        xPos += pMove.getX()*walkMultiplier;
-        if (!isJumping){
-            gravitation();
-        }
-        if(Control.keyManager.jump&&grounded){
-            isJumping=true;
-        } else if (!Control.keyManager.jump){
-            isJumping=false;
-        }
-        if (isJumping){
-            jump();
-        }
+        yPos += ySpeed;
+
         if (moveSeqSleep++ == 7) {
             if (moveSeq < 2) {
                 moveSeq++;
             } else {
                 moveSeq = 0;
+                if (!grounded) {
+                    ySpeed += 2;
+                }
+
             }
             moveSeqSleep = 0;
         }
-        setCurrentImage((int) pMove.getX(), (int) pMove.getY(), moveSeq);
 
-        if (wallCheck()){
-            xPos=oldX;
+        if (cooldown != 0){
+            cooldown--;
         }
-    }
 
-    public void jump(){
-        if (!ceilingCheck() && jumpTop < 1){
-            grounded=false;
-            if (jumpCounter < 30) {
-                yPos -= 14;
-                jumpCounter++;
-            } else if (jumpTop == 0) {
-                yPos += 2;
-                jumpTop++;
-            } else {
-                isJumping=false;
-                jumpCounter = 0;
-                jumpTop=0;
+
+        setCurrentImage((int) pMove.getX(), (int) ySpeed, moveSeq);
+        setCheckPoints(new Point((int) pMove.getX(), 1));
+
+        if (collisionCheck()) {
+            xPos = oldX;
+            yPos = oldY;
+            lifePoints--;
+            if (lifePoints < 0) {
+                lifePoints = 100;
             }
-        } else if (jumpTop < 10) {
-            yPos += 2;
-            jumpTop++;
         } else {
-            isJumping=false;
-            jumpCounter = 0;
-            jumpTop=0;
+            grounded = false;
         }
+        if(grounded){
+            ySpeed += pMove.getY();
+        }
+
+        itemCheck(control.keyManager.action);
+
+        System.out.println(xPos + ", " + yPos);
     }
 
-    public void gravitation(){
-        if (floorCheck()){
-            grounded = true;
-        } else {
-            ySpeed = 8;
-            yPos += ySpeed;
+    public void setPos(int pXPos, int pYPos){
+        xPos = pXPos;
+        yPos = pYPos;
+    }
+
+    public void attack(){
+
+        int diffX = xPos - control.enemies.get(0).getPos().x;
+        int diffY = yPos - control.enemies.get(0).getPos().y;
+
+        if (50 >= diffX+diffY && diffX+diffY >= -50 && cooldown == 0) {
+            if (() || () || () || ())
+            control.enemies.get(0).takeDmg(10);
+            cooldown = 10;
         }
+
+    }
+
+    public void shoot(){
+        b = new Bullet(xPos-control.camera.getXOffset(), yPos-control.camera.getYOffset(), 20, 20, 10, 10);
+        balling = true;
     }
 
     public void setCurrentImage(int pXMove, int pYMove, int pMoveSeq) {
-        if (pXMove == 1 && grounded) {
+        if (pXMove == -1) {
             image = sprites.getSpriteElement(1, pMoveSeq);
-            direction=1;
-        } else if (pXMove == 1 && isJumping) {
-            image = sprites.getSpriteElement(0, 0);
-            direction=1;
-        } else if (pXMove == 1){
-            image = sprites.getSpriteElement(0, 2);
-            direction=1;
         }
-
-        if (pXMove == -1 && grounded) {
+        if (pXMove == 1) {
             image = sprites.getSpriteElement(2, pMoveSeq);
-            direction=2;
-        }  else if (pXMove == -1 && isJumping) {
-            image = sprites.getSpriteElement(3, 2);
-            direction=2;
-        } else  if (pXMove == -1){
-            image = sprites.getSpriteElement(3, 0);
-            direction=2;
         }
-
-        if (pXMove == 0 && grounded){
-            image = sprites.getSpriteElement(direction, 0);
-        } else if (pXMove == 0 && isJumping) {
-            if (direction == 1){
-                image = sprites.getSpriteElement(0, 0);
-            } else {
-                image = sprites.getSpriteElement(3, 2);
-            }
-        } else if (pXMove == 0) {
-            if (direction == 1){
-                image = sprites.getSpriteElement(0, 2);
-            } else {
-                image = sprites.getSpriteElement(3, 0);
-            }
+        if (pYMove == -1) {
+            image = sprites.getSpriteElement(3, pMoveSeq);
+        }
+        if (pYMove == 1) {
+            image = sprites.getSpriteElement(0, pMoveSeq);
         }
     }
 
-    private boolean wallCheck(){
+    public void paintMe(Graphics g){
+      g.fillOval(xPos-control.camera.getXOffset()+20, yPos-control.camera.getYOffset()+16,  24, 48);
+//        playerHitBox = new Ellipse2D.Double(xPos-control.camera.getXOffset()+20, yPos-control.camera.getYOffset()+16,  24, 48);
+//        Graphics2D g2d = (Graphics2D) g;
+//        g2d.fill(playerHitBox);
+
+        if (balling){
+            g.setColor(Color.red);
+            b.paintMe(g);
+            g.setColor(Color.black);
+        }
+
+
+    }
+
+
+    public void setCheckPoints(Point pMove) {
+        hit = false;
+        if (pMove.getX() == 1 && pMove.getY() == 0) { //rechts
+            check4.setLocation(xPos + (width - 10), yPos + 5);
+            check5.setLocation(xPos + (width - 10), yPos + (height / 2));
+            check6.setLocation(xPos + (width - 10), yPos + height - 5);
+            hit = true;
+        }
+
+        if (pMove.getX() == -1 && pMove.getY() == 0) { //links
+            check4.setLocation(xPos + 10, yPos + 5);
+            check5.setLocation(xPos + 10, yPos + (height / 2));
+            check6.setLocation(xPos + 10, yPos + height - 5);
+            hit = true;
+        }
+
+        if (pMove.getX() == 0 && pMove.getY() == -1) { //oben
+            check4.setLocation(xPos + 10, yPos + 10);
+            check5.setLocation(xPos + (width / 2), yPos + 10);
+            check6.setLocation(xPos + (width / 2) + 10, yPos + 10);
+            hit = true;
+        }
+
+            check1.setLocation(xPos + 10, yPos + (height - 5));
+            check2.setLocation(xPos + (width / 2), yPos + (height - 5));
+            check3.setLocation(xPos + (width - 10), yPos + (height - 5));
+    }
+
+    private boolean collisionCheck() {
         ArrayList<Layer> layerList = Control.map.getLayerList();
-        leftTop = new Point2D.Double(xPos+23, yPos+23);
-        Point2D leftMiddle = new Point2D.Double(xPos+23, yPos+42);
-        leftBottom = new Point2D.Double(xPos+23, yPos+63);
-        rightTop = new Point2D.Double(xPos+41, yPos+23);
-        Point2D rightMiddle = new Point2D.Double(xPos+41, yPos+42);
-        rightBottom = new Point2D.Double(xPos+41, yPos+63);
         for (int i = 0; i < layerList.size(); i++) {
-            Tile temp = layerList.get(0).tiles[(int) leftTop.getX() / 64][(int) leftTop.getY() / 64];
-            Tile temp2 = layerList.get(0).tiles[(int) leftMiddle.getX() / 64][(int) leftMiddle.getY() / 64];
-            Tile temp3 = layerList.get(0).tiles[(int) leftBottom.getX() / 64][(int) leftBottom.getY() / 64];
-            Tile temp4 = layerList.get(0).tiles[(int) rightTop.getX() / 64][(int) rightTop.getY() / 64];
-            Tile temp5 = layerList.get(0).tiles[(int) rightMiddle.getX() / 64][(int) rightMiddle.getY() / 64];
-            Tile temp6 = layerList.get(0).tiles[(int) rightBottom.getX() / 64][(int) rightBottom.getY() / 64];
-            if (grounded){
-                if (temp.isBlocked() || temp2.isBlocked() || temp4.isBlocked() || temp5.isBlocked()) {
-                    return true;
-                }
+            Tile temp1 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
+            Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
+            Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
+            Tile temp4, temp5, temp6;
+            if(hit){
+                temp4 = layerList.get(i).tiles[(int) check4.getX() / layerList.get(i).getTileWidth()][(int) check4.getY() / layerList.get(i).getTileHeight()];
+                temp5 = layerList.get(i).tiles[(int) check5.getX() / layerList.get(i).getTileWidth()][(int) check5.getY() / layerList.get(i).getTileHeight()];
+                temp6 = layerList.get(i).tiles[(int) check6.getX() / layerList.get(i).getTileWidth()][(int) check6.getY() / layerList.get(i).getTileHeight()];
             } else {
-                if (temp.isBlocked() || temp2.isBlocked() || temp3.isBlocked() || temp4.isBlocked() || temp5.isBlocked() || temp6.isBlocked()) {
-                    return true;
-                }
+                temp4 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
+                temp5 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
+                temp6 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
             }
 
+            if (temp1.isBlocked() || temp2.isBlocked() || temp3.isBlocked() || temp4.isBlocked() || temp5.isBlocked() || temp6.isBlocked()) {
+                ySpeed = 0;
+                grounded = true;
+                return true;
+            }
+
+            if (temp1.getFlagI().equals("A") || temp2.getFlagI().equals("A") || temp3.getFlagI().equals("A") || temp4.getFlagI().equals("A") || temp5.getFlagI().equals("A") || temp6.getFlagI().equals("A")) {
+                control.loadNewMap();
+                System.out.println(temp1.getFlagI());
+                System.out.println(temp2.getFlagI());
+                System.out.println(temp3.getFlagI());
+                System.out.println(temp4.getFlagI());
+                System.out.println(temp5.getFlagI());
+                System.out.println(temp6.getFlagI());
+            }
         }
         return false;
     }
 
-    private boolean floorCheck(){
-        ArrayList<Layer> layerList = Control.map.getLayerList();
-        leftBottom = new Point2D.Double(xPos+26, yPos+64);
-        rightBottom = new Point2D.Double(xPos+37, yPos+64);
-        Tile temp = layerList.get(0).tiles[(int) leftBottom.getX() / 64][(int) leftBottom.getY() / 64];
-        Tile temp2 = layerList.get(0).tiles[(int) rightBottom.getX() / 64][(int) rightBottom.getY() / 64];
-        if(temp.isBlocked()||temp2.isBlocked()){
-            return true;
-        }
-        return false;
-    }
+    public void itemCheck(boolean action) {
+        ArrayList<Layer> layerList = control.map.getLayerList();
+        for (int i = 0; i < layerList.size(); i++) {
+            if (action) {
+                Tile temp1 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
+                Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
+                Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
 
-    private boolean ceilingCheck(){
-        ArrayList<Layer> layerList = Control.map.getLayerList();
-        leftTop = new Point2D.Double(xPos+26, yPos+20);
-        rightTop = new Point2D.Double(xPos+37, yPos+20);
-        Tile temp = layerList.get(0).tiles[(int) leftTop.getX() / 64][(int) leftTop.getY() / 64];
-        Tile temp2 = layerList.get(0).tiles[(int) rightTop.getX() / 64][(int) rightTop.getY() / 64];
-        if(temp.isBlocked()||temp2.isBlocked()){
-            return true;
-        }
-        return false;
-    }
+                if (temp1.getFlagI().equals("I")) {
+                    temp1.itemCatched();
+                    Control.keyManager.releaseAll();
+                    return;
+                }
+                if (temp2.getFlagI().equals("I")) {
+                    temp2.itemCatched();
+                    Control.keyManager.releaseAll();
+                    return;
+                }
 
-//    public void itemCheck(boolean action) {
-//        ArrayList<Layer> layerList = control.map.getLayerList();
-//        for (int i = 0; i < layerList.size(); i++) {
-//            if (action) {
-//                Tile temp1 = layerList.get(i).tiles[(int) check1.getX() / layerList.get(i).getTileWidth()][(int) check1.getY() / layerList.get(i).getTileHeight()];
-//                Tile temp2 = layerList.get(i).tiles[(int) check2.getX() / layerList.get(i).getTileWidth()][(int) check2.getY() / layerList.get(i).getTileHeight()];
-//                Tile temp3 = layerList.get(i).tiles[(int) check3.getX() / layerList.get(i).getTileWidth()][(int) check3.getY() / layerList.get(i).getTileHeight()];
-//
-//                if (temp1.getFlagI().equals("I")) {
-//                    temp1.itemCatched();
-//                    Control.keyManager.releaseAll();
-//                    return;
-//                }
-//                if (temp2.getFlagI().equals("I")) {
-//                    temp2.itemCatched();
-//                    Control.keyManager.releaseAll();
-//                    return;
-//                }
-//
-//                if (temp3.getFlagI().equals("I")) {
-//                    temp3.itemCatched();
-//                    Control.keyManager.releaseAll();
-//                    return;
-//                }
-//
-//                if (temp1.getFlagI().equals("K")) {
+                if (temp3.getFlagI().equals("I")) {
+                    temp3.itemCatched();
+                    Control.keyManager.releaseAll();
+                    return;
+                }
+
+                if (temp1.getFlagI().equals("K")) {
+                    control.loadNewMap();
+                    Control.keyManager.releaseAll();
+                    return;
+                }
+                if (temp2.getFlagI().equals("K")) {
 //                    control.loadNewMap();
-//                    Control.keyManager.releaseAll();
-//                    return;
-//                }
-//                if (temp2.getFlagI().equals("K")) {
-//                    control.loadNewMap();
-//                    Control.keyManager.releaseAll();
-//                    return;
-//                }
-//            }
-//        }
-//    }
+                    Control.keyManager.releaseAll();
+                    return;
+                }
+            }
+        }
+    }
 
-    public void renderLifePointBar(Graphics2D g2d){
+    public void w(Graphics2D g2d){
         BasicStroke stroke = new BasicStroke(3 , BasicStroke.CAP_BUTT, BasicStroke.JOIN_ROUND );
         g2d.setStroke(stroke);
         g2d.drawRect(xPos - Control.camera.getXOffset()-15, yPos - Control.camera.getYOffset()-25, 104, 20);
@@ -268,11 +272,11 @@ public class Mover {
 
         g2d.fillRect(xPos - Control.camera.getXOffset()-13, yPos - Control.camera.getYOffset()-23, lifePoints, 16);
     }
-    
-        public void paintMe(Graphics2D g2d) {
-        g2d.drawImage(image, xPos - Control.camera.getXOffset(), yPos - Control.camera.getYOffset(), width, height, null);
-//        renderLifePointBar(g2d);
-            playerHitBox = new Rectangle(xPos - Control.camera.getXOffset()+23, yPos - Control.camera.getYOffset()+20,  18, 44);
-            g2d.fill(playerHitBox);
-    }
+
+
+
+//    public void paintMe(Graphics2D g2d) {
+//        g2d.drawImage(image, xPos - Control.camera.getXOffset(), yPos - Control.camera.getYOffset(), width, height, null);
+////        renderLifePointBar(g2d);
+//    }
 }
